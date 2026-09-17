@@ -1,0 +1,37 @@
+# accelerate launch --config_file configs/fsdp_config.yaml train.py ...
+#
+# Full-shard FSDP config for BD3LM. `fsdp_transformer_layer_cls_to_wrap`
+# targets `BD3LMBlock` by name because `BD3LMPreTrainedModel._no_split_modules
+# = ["BD3LMBlock"]` — every attention + MoE block is wrapped and sharded as
+# one atomic unit, so a shared expert's parameters never end up split across
+# a shard boundary from its router or its own weights mid-forward.
+#
+# Edit `num_processes` to match your GPU count on this node (and use a
+# separate `accelerate config` / multi-node launch setup for multi-node).
+
+compute_environment: LOCAL_MACHINE
+distributed_type: FSDP
+downcast_bf16: "no"
+fsdp_config:
+  fsdp_activation_checkpointing: false   # train.py's own --gradient_checkpointing already covers this
+  fsdp_auto_wrap_policy: TRANSFORMER_BASED_WRAP
+  fsdp_transformer_layer_cls_to_wrap: BD3LMBlock
+  fsdp_backward_prefetch: BACKWARD_PRE
+  fsdp_cpu_ram_efficient_loading: true
+  fsdp_forward_prefetch: false
+  fsdp_offload_params: false
+  fsdp_sharding_strategy: FULL_SHARD
+  fsdp_state_dict_type: SHARDED_STATE_DICT
+  fsdp_sync_module_states: true
+  fsdp_use_orig_params: true
+machine_rank: 0
+main_training_function: main
+mixed_precision: bf16
+num_machines: 1
+num_processes: 8
+rdzv_backend: static
+same_network: true
+tpu_env: []
+tpu_use_cluster: false
+tpu_use_sudo: false
+use_cpu: false

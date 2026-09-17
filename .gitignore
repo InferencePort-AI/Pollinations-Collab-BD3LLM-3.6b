@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Training artifacts
+bd3lm-checkpoints/
+*.safetensors
+*.bin
+*.pt
+*.ckpt
+wandb/
+runs/
+logs/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,22 @@
+# Core — required to build/run BD3LM (modeling_bd3lm.py)
+torch>=2.9.0
+transformers>=5.17.0
+accelerate>=1.15.0
+safetensors>=0.8.0
+
+# Training (train.py): dataset loading/tokenization
+datasets>=5.0.1
+tokenizers>=0.23.2
+numpy>=1.26
+
+# Optional: multi-GPU / distributed training backends.
+# DeepSpeed is Linux-only; skip it automatically elsewhere.
+deepspeed>=0.19.6 ; sys_platform == "linux"
+
+# Optional: RLHF/GRPO/PPO post-training on top of BD3LMForCausalLM.
+trl>=1.13.0
+peft>=0.21.0
+
+# Optional: experiment tracking (either works with --report_to)
+tensorboard>=2.18
+wandb>=0.18

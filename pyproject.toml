@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bd3lm"
+version = "0.1.0"
+description = "BD3LM: a DeepSeek-style Mixture-of-Experts reasoning language model with ultra-compressed multi-query attention, natively integrated with Hugging Face Transformers."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "BD3LM contributors" }]
+keywords = [
+    "llm",
+    "transformers",
+    "mixture-of-experts",
+    "multi-query-attention",
+    "reasoning",
+    "huggingface",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "torch>=2.9.0",
+    "transformers>=5.17.0",
+    "accelerate>=1.15.0",
+    "safetensors>=0.8.0",
+    "datasets>=5.0.1",
+    "tokenizers>=0.23.2",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+train = [
+    "deepspeed>=0.19.6 ; sys_platform == 'linux'",
+    "trl>=1.13.0",
+    "peft>=0.21.0",
+    "tensorboard>=2.18",
+    "wandb>=0.18",
+]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[project.urls]
+Homepage = "https://example.com/bd3lm"
+
+[tool.setuptools]
+py-modules = ["modeling_bd3lm", "train"]
+
+[tool.ruff]
+line-length = 130
+target-version = "py310"
