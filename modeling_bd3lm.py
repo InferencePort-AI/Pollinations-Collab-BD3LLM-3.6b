@@ -225,6 +225,21 @@ class FeatherweightRoPE(nn.Module):
         self.rope_theta = config.rope_theta
         self.max_position_embeddings = config.max_position_embeddings
 
+        self.register_buffer("inverse_frequency", torch.empty(config.rope_dim // 2, dtype=torch.float32), persistent=False)
+        self.reset_parameters(device=device)
+
+    @torch.no_grad()
+    def reset_parameters(self, device: Optional[torch.device] = None) -> None:
+        """
+        (Re)computes the `inverse_frequency` buffer in place.
+
+        This is called both from `__init__` and from
+        `BD3LMPreTrainedModel._init_weights`. The latter matters because
+        `from_pretrained` materializes the model on the `meta` device and
+        fills *non-persistent* buffers with uninitialized memory (they are
+        not in the checkpoint), so they must be recomputed after loading —
+        exactly what native `transformers` models do for their RoPE buffers.
+        """
         inverse_frequency = 1.0 / (
             self.rope_theta
             ** (
@@ -232,7 +247,7 @@ class FeatherweightRoPE(nn.Module):
                 / self.rope_dim
             )
         )
-        self.register_buffer("inverse_frequency", inverse_frequency, persistent=False)
+        self.inverse_frequency.copy_(inverse_frequency.to(device=self.inverse_frequency.device))
 
     @torch.no_grad()
     def forward(
@@ -417,7 +432,14 @@ class KVEfficientAttention(nn.Module):
 
             attention_scores = torch.matmul(query_states, key_states_for_scores.transpose(2, 3)) * self.scaling
             if attention_mask is not None:
-                attention_scores = attention_scores + attention_mask
+                if attention_mask.dtype == torch.bool:
+                    # `sdpa_mask` interface: True = attend, False = masked out.
+                    attention_scores = attention_scores.masked_fill(
+                        ~attention_mask, torch.finfo(attention_scores.dtype).min
+                    )
+                else:
+                    # `eager_mask` interface: additive 0 / -inf float mask.
+                    attention_scores = attention_scores + attention_mask
             attention_probabilities = F.softmax(attention_scores, dim=-1, dtype=torch.float32).to(query_states.dtype)
             attention_probabilities = F.dropout(attention_probabilities, p=self.attention_dropout, training=self.training)
             attention_output = torch.matmul(attention_probabilities, value_states_for_scores)
@@ -703,6 +725,11 @@ class BD3LMPreTrainedModel(PreTrainedModel):
                 module.weight.data[module.padding_idx].zero_()
         elif isinstance(module, BD3LMRMSNorm):
             module.weight.data.fill_(1.0)
+        elif isinstance(module, FeatherweightRoPE):
+            # Non-persistent buffers are not stored in checkpoints and are
+            # re-created as uninitialized memory when `from_pretrained`
+            # materializes a model on the `meta` device — recompute them.
+            module.reset_parameters()
 
 
 class BD3LMModel(BD3LMPreTrainedModel):
@@ -765,6 +792,10 @@ class BD3LMModel(BD3LMPreTrainedModel):
             attention_mask=attention_mask,
             past_key_values=past_key_values,
             position_ids=position_ids,
+            # The eager (`output_attentions`) code path has no `is_causal`
+            # fallback of its own, so it always needs an explicit additive
+            # mask — never allow the mask to be skipped as `None`.
+            allow_is_causal_skip=not output_attentions,
         )
 
         hidden_states = inputs_embeds
