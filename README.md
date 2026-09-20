@@ -94,6 +94,10 @@ bd3lm/
 │                           # PreTrainedModel wrappers, AutoClass registration, and a
 │                           # `python modeling_bd3lm.py` verification/smoke-test suite.
 ├── train.py                # One-click Trainer-based training entry point.
+├── swarm_worker.py         # Churn-tolerant volunteer DiLoCo worker.
+├── swarm_coordinator.py    # Quorum/merge coordinator backed by a HF model repo.
+├── swarm_common.py         # Sharded delta I/O, validation, clipping, and merge logic.
+├── SWARM.md                # Complete volunteer-GPU deployment guide.
 ├── requirements.txt
 ├── pyproject.toml          # `pip install -e .`
 ├── configs/
@@ -134,7 +138,7 @@ python train.py --debug_tiny_model --max_steps 20
 # Real single-GPU run:
 python train.py \
   --tokenizer_name_or_path gpt2 \
-  --dataset_name wikitext --dataset_config_name wikitext-103-raw-v1 \
+  --dataset_name Salesforce/wikitext --dataset_config_name wikitext-103-raw-v1 \
   --per_device_train_batch_size 4 --gradient_accumulation_steps 16 \
   --output_dir ./bd3lm-checkpoints
 ```
@@ -147,6 +151,15 @@ because it needs no authentication/license acceptance to download; for the
 multilingual/symbolic coverage the 128k vocabulary is actually sized for, point
 `--tokenizer_name_or_path` at (or train) a multilingual BPE/SentencePiece tokenizer
 instead.
+
+## Volunteer GPUs over the internet
+
+For contributors who are not on one local network and need to join or leave without
+breaking everyone else's training, use the Hub-backed round-based DiLoCo workflow in
+[`SWARM.md`](SWARM.md). Workers train independent local replicas and submit
+`base - local` pseudo-gradients as Hugging Face Pull Requests; a single coordinator
+validates a quorum and commits an outer Nesterov step. No NCCL, open ports, shared
+filesystem, or worker access to the repo's write token is required.
 
 ### Multi-GPU: DeepSpeed ZeRO-2
 

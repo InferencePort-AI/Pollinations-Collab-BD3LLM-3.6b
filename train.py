@@ -9,7 +9,7 @@ Quick start
 Real run on a single GPU:
     python train.py \\
         --tokenizer_name_or_path gpt2 \\
-        --dataset_name wikitext --dataset_config_name wikitext-103-raw-v1 \\
+        --dataset_name Salesforce/wikitext --dataset_config_name wikitext-103-raw-v1 \\
         --per_device_train_batch_size 4 --gradient_accumulation_steps 16 \\
         --output_dir ./bd3lm-checkpoints
 
@@ -62,7 +62,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     )
 
     data_group = parser.add_argument_group("data")
-    data_group.add_argument("--dataset_name", type=str, default="wikitext", help="A `datasets` Hub dataset name.")
+    data_group.add_argument("--dataset_name", type=str, default="Salesforce/wikitext", help="A `datasets` Hub dataset name.")
     data_group.add_argument("--dataset_config_name", type=str, default="wikitext-2-raw-v1")
     data_group.add_argument("--train_text_column", type=str, default="text")
     data_group.add_argument(

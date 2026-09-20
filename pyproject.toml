@@ -32,6 +32,7 @@ dependencies = [
     "transformers>=5.17.0",
     "accelerate>=1.15.0",
     "safetensors>=0.8.0",
+    "huggingface_hub>=1.32.0",
     "datasets>=5.0.1",
     "tokenizers>=0.23.2",
     "numpy>=1.26",
@@ -51,7 +52,7 @@ dev = ["pytest>=8.0", "ruff>=0.6"]
 Homepage = "https://example.com/bd3lm"
 
 [tool.setuptools]
-py-modules = ["modeling_bd3lm", "train"]
+py-modules = ["modeling_bd3lm", "train", "swarm_common", "swarm_worker", "swarm_coordinator"]
 
 [tool.ruff]
 line-length = 130
