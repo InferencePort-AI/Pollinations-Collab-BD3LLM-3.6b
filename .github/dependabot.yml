@@ -5,7 +5,16 @@
 
 version: 2
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # 1. Automatically find and update npm dependencies anywhere in the repo
+  - package-ecosystem: "npm"
+    directories:
+      - "/**" # Tells Dependabot to find all package.json files recursively
+    schedule:
+      interval: "weekly"
+
+  # 2. Automatically find and update Python dependencies anywhere in the repo
+  - package-ecosystem: "pip"
+    directories:
+      - "/**" # Tells Dependabot to find pyproject.toml / requirements.txt recursively
     schedule:
       interval: "weekly"
